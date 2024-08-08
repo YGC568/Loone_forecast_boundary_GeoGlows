@@ -1,0 +1,132 @@
+name: Geoglows Processing_dbhybroR
+on:
+  schedule:
+    - cron: '0 11 * * *'  # cron expression runs the job daily at 11 AM UTC
+  workflow_dispatch:  # Allows manual trigger of the workflow
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository content
+      uses: actions/checkout@v2  # Checkout the repository content to GitHub runner
+
+    - name: Cache pip packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Cache R packages
+      uses: actions/cache@v2
+      with:
+        path: ~/R/site-library
+        key: ${{ runner.os }}-R-${{ hashFiles('**/packages.R') }}
+        restore-keys: |
+          ${{ runner.os }}-R-
+
+    - name: Cache Data_Download directory
+      uses: actions/cache@v2
+      with:
+        path: Data_Download
+        key: ${{ runner.os }}-data-download
+        restore-keys: |
+          ${{ runner.os }}-data-download
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'  # Specify the Python version you need
+
+    - name: Install Python dependencies
+      run: |
+        pip install loone-data-prep==0.1.7
+        #pip install rpy2  # Install rpy2 to use R within Python
+        #pip install cffi 
+
+    - name: Install system dependencies for R and rpy2
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y r-base libcurl4-openssl-dev libssl-dev libxml2-dev ca-certificates
+
+    - name: Install CA certificates
+      run: sudo apt-get install -y ca-certificates
+
+    - name: Create R library directory
+      run: mkdir -p ~/R/site-library
+
+    - name: Set R environment variable
+      run: echo 'R_LIBS_USER="~/R/site-library"' >> ~/.Renviron
+
+    - name: Install remotes package
+      run: |
+        R -e 'install.packages(c("remotes", "dplyr"), lib="~/R/site-library", repos="https://cloud.r-project.org/")'
+
+    - name: Install dbhydroR from GitHub
+      env:
+        GITHUB_PAT: ${{ secrets.PAT }}
+      run: |
+        R -e 'remotes::install_github("YGC568/dbhydroR", lib="~/R/site-library", auth_token=Sys.getenv("GITHUB_PAT"))'
+
+    - name: Set R environment variables
+      run: |
+        echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
+        echo "R_LIBS_USER=~/R/site-library" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(R RHOME)/lib" >> $GITHUB_ENV
+
+    - name: Disable SSL verification for R
+      run: |
+        echo 'options(download.file.method = "libcurl")' >> ~/.Rprofile
+        echo 'httr::set_config(httr::config(ssl_verifypeer = FALSE))' >> ~/.Rprofile
+
+    - name: Set R encoding to UTF-8
+      run: |
+        echo 'options(encoding = "UTF-8")' >> ~/.Rprofile
+        echo 'Sys.setlocale("LC_ALL", "en_US.UTF-8")' >> ~/.Rprofile
+
+    - name: Create necessary directories
+      run: |
+        mkdir -p Data_Download
+        mkdir -p Outputs
+
+    - name: Monthly Geoglows data preparation
+      if: ${{ (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch') }}
+      env:
+        R_HOME: ${{ env.R_HOME }}
+        R_LIBS_USER: ${{ env.R_LIBS_USER }}
+        LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
+      run: |
+        if [ "$(date +'%d')" -eq "07" ]; then
+          python -m loone_data_prep.flow_data.get_inflows Data_Download && \
+          python -m loone_data_prep.flow_data.get_outflows Data_Download && \
+          python -m loone_data_prep.flow_data.S65E_total Data_Download
+        fi
+
+    - name: Run forecast flows script
+      env:
+        R_HOME: ${{ env.R_HOME }}
+        R_LIBS_USER: ${{ env.R_LIBS_USER }}
+        LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
+      run: python get_forecast_flows.py Outputs True Outputs
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'YGC568'
+        git config --global user.email 'gopichandyenikapalli@usf.edu'
+
+    - name: Stage all changes
+      run: |
+        git add Outputs/*
+        if [ "$(date +'%d')" -eq "07" ]; then git add Data_Download/*; fi
+
+    - name: Commit and push changes
+      run: |
+        if [ "$(date +'%d')" -eq "07" ]; then
+          git commit -m "Monthly data processing at $(date +'%Y-%m-%d %H:%M:%S')"
+        else
+          git commit -m "Daily data processing at $(date +'%Y-%m-%d %H:%M:%S')"
+        fi
+        git push https://github.com/YGC568/Loonetest3 HEAD:main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
