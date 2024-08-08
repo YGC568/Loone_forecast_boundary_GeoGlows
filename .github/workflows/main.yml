@@ -1,7 +1,7 @@
 name: Geoglows Processing_dbhybroR
 on:
   schedule:
-    - cron: '0 11 * * *'  # cron expression runs the job daily at 11 AM UTC
+    - cron: '0 13 * * *'  # cron expression runs the job daily at 1 PM UTC
   workflow_dispatch:  # Allows manual trigger of the workflow
 jobs:
   run-script:
@@ -88,7 +88,10 @@ jobs:
     - name: Create necessary directories
       run: |
         mkdir -p Data_Download
-        mkdir -p Outputs
+   
+    - name: Create month-year directory
+      run: |
+        mkdir -p Outputs_$(date +'%m_%Y')
 
     - name: Monthly Geoglows data preparation
       if: ${{ (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch') }}
@@ -97,7 +100,7 @@ jobs:
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
         LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
       run: |
-        if [ "$(date +'%d')" -eq "07" ]; then
+        if [ "$(date +'%d')" -eq "08" ]; then
           python -m loone_data_prep.flow_data.get_inflows Data_Download && \
           python -m loone_data_prep.flow_data.get_outflows Data_Download && \
           python -m loone_data_prep.flow_data.S65E_total Data_Download
@@ -108,7 +111,7 @@ jobs:
         R_HOME: ${{ env.R_HOME }}
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
         LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
-      run: python get_forecast_flows.py Outputs True Outputs
+      run: python get_forecast_flows.py Outputs_$(date +'%m_%Y') True Outputs_$(date +'%m_%Y')
 
     - name: Configure Git
       run: |
@@ -117,16 +120,16 @@ jobs:
 
     - name: Stage all changes
       run: |
-        git add Outputs/*
-        if [ "$(date +'%d')" -eq "07" ]; then git add Data_Download/*; fi
+        git add Outputs_$(date +'%m_%Y')/*
+        if [ "$(date +'%d')" -eq "08" ]; then git add Data_Download/*; fi
 
     - name: Commit and push changes
       run: |
-        if [ "$(date +'%d')" -eq "07" ]; then
+        if [ "$(date +'%d')" -eq "08" ]; then
           git commit -m "Monthly data processing at $(date +'%Y-%m-%d %H:%M:%S')"
         else
           git commit -m "Daily data processing at $(date +'%Y-%m-%d %H:%M:%S')"
         fi
-        git push https://github.com/YGC568/Loonetest3 HEAD:main
+        git push https://github.com/YGC568/Loonetest4 HEAD:main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
