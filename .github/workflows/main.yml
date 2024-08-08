@@ -1,7 +1,7 @@
 name: Geoglows Processing_dbhybroR
 on:
   schedule:
-    - cron: '0 9 * * *'  # cron expression runs the job daily at 1 PM UTC
+    - cron: '0 9 * * *'  # cron expression runs the job daily at 9 AM UTC (4 AM EST)
   workflow_dispatch:  # Allows manual trigger of the workflow
 jobs:
   run-script:
@@ -130,6 +130,6 @@ jobs:
         else
           git commit -m "Daily data processing at $(date +'%Y-%m-%d %H:%M:%S')"
         fi
-        git push https://github.com/YGC568/Loonetest4 HEAD:main
+        git push https://github.com/YGC568/Loone_forecast_boundary_GeoGlows HEAD:main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
