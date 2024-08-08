@@ -1,7 +1,7 @@
 name: Geoglows Processing_dbhybroR
 on:
   schedule:
-    - cron: '0 13 * * *'  # cron expression runs the job daily at 1 PM UTC
+    - cron: '0 9 * * *'  # cron expression runs the job daily at 1 PM UTC
   workflow_dispatch:  # Allows manual trigger of the workflow
 jobs:
   run-script:
@@ -87,11 +87,11 @@ jobs:
 
     - name: Create necessary directories
       run: |
-        mkdir -p Data_Download
+        mkdir -p historical_data_download
    
     - name: Create month-year directory
       run: |
-        mkdir -p Outputs_$(date +'%m_%Y')
+        mkdir -p forecasted_boundary_$(date +'%m_%Y')
 
     - name: Monthly Geoglows data preparation
       if: ${{ (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch') }}
@@ -100,10 +100,10 @@ jobs:
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
         LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
       run: |
-        if [ "$(date +'%d')" -eq "08" ]; then
-          python -m loone_data_prep.flow_data.get_inflows Data_Download && \
-          python -m loone_data_prep.flow_data.get_outflows Data_Download && \
-          python -m loone_data_prep.flow_data.S65E_total Data_Download
+        if [ "$(date +'%d')" -eq "01" ]; then
+          python -m loone_data_prep.flow_data.get_inflows historical_data_download && \
+          python -m loone_data_prep.flow_data.get_outflows historical_data_download && \
+          python -m loone_data_prep.flow_data.S65E_total historical_data_download
         fi
 
     - name: Run forecast flows script
@@ -111,8 +111,8 @@ jobs:
         R_HOME: ${{ env.R_HOME }}
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
         LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
-      run: python get_forecast_flows.py Outputs_$(date +'%m_%Y') True Outputs_$(date +'%m_%Y')
-
+      run: python get_forecast_flows.py forecasted_boundary_$(date +'%m_%Y') True forecasted_boundary_$(date +'%m_%Y')
+#here true means bias corrected
     - name: Configure Git
       run: |
         git config --global user.name 'YGC568'
@@ -120,12 +120,12 @@ jobs:
 
     - name: Stage all changes
       run: |
-        git add Outputs_$(date +'%m_%Y')/*
-        if [ "$(date +'%d')" -eq "08" ]; then git add Data_Download/*; fi
+        git add forecasted_boundary_$(date +'%m_%Y')/*
+        if [ "$(date +'%d')" -eq "01" ]; then git add historical_data_download/*; fi
 
     - name: Commit and push changes
       run: |
-        if [ "$(date +'%d')" -eq "08" ]; then
+        if [ "$(date +'%d')" -eq "01" ]; then
           git commit -m "Monthly data processing at $(date +'%Y-%m-%d %H:%M:%S')"
         else
           git commit -m "Daily data processing at $(date +'%Y-%m-%d %H:%M:%S')"
