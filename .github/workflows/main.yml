@@ -26,14 +26,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-R-
 
-    - name: Cache Data_Download directory
-      uses: actions/cache@v2
-      with:
-        path: Data_Download
-        key: ${{ runner.os }}-data-download
-        restore-keys: |
-          ${{ runner.os }}-data-download
-
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
