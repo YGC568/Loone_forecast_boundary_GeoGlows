@@ -25,7 +25,6 @@ jobs:
         key: ${{ runner.os }}-R-${{ hashFiles('**/packages.R') }}
         restore-keys: |
           ${{ runner.os }}-R-
-        #pip install cffi 
 
     - name: Install system dependencies for R and rpy2
       run: |
