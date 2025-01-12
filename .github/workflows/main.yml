@@ -25,16 +25,6 @@ jobs:
         key: ${{ runner.os }}-R-${{ hashFiles('**/packages.R') }}
         restore-keys: |
           ${{ runner.os }}-R-
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'  # Specify the Python version you need
-
-    - name: Install Python dependencies
-      run: |
-        pip install loone-data-prep==0.1.9
-        #pip install rpy2  # Install rpy2 to use R within Python
         #pip install cffi 
 
     - name: Install system dependencies for R and rpy2
@@ -54,6 +44,16 @@ jobs:
     - name: Install remotes package
       run: |
         R -e 'install.packages(c("remotes", "dplyr"), lib="~/R/site-library", repos="https://cloud.r-project.org/")'
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'  # Specify the Python version you need
+
+    - name: Install Python dependencies
+      run: |
+        pip install loone-data-prep==0.1.9
+        #pip install rpy2  # Install rpy2 to use R within Python
+
 
     - name: Install dbhydroR from GitHub
       env:
