@@ -33,7 +33,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip install loone-data-prep==0.1.7
+        pip install loone-data-prep==0.1.9
         #pip install rpy2  # Install rpy2 to use R within Python
         #pip install cffi 
 
