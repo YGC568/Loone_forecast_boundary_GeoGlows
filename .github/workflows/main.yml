@@ -30,6 +30,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y r-base libcurl4-openssl-dev libssl-dev libxml2-dev ca-certificates
+        sudo apt-get install -y libtirpc-dev
 
     - name: Install CA certificates
       run: sudo apt-get install -y ca-certificates
@@ -51,7 +52,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         pip install loone-data-prep==0.1.9
-        #pip install rpy2  # Install rpy2 to use R within Python
+        pip install rpy2  # Install rpy2 to use R within Python
 
 
     - name: Install dbhydroR from GitHub
