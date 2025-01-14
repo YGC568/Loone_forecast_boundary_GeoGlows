@@ -11,7 +11,7 @@ jobs:
       uses: actions/checkout@v2  # Checkout the repository content to GitHub runner
 
     - name: Cache pip packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -19,7 +19,7 @@ jobs:
           ${{ runner.os }}-pip-
 
     - name: Cache R packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/R/site-library
         key: ${{ runner.os }}-R-${{ hashFiles('**/packages.R') }}
