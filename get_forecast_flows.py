@@ -1,11 +1,4 @@
 import os
-
-# Set only if not already set
-os.environ.setdefault("R_HOME", "/usr/lib/R")
-os.environ.setdefault("R_LIBS_USER", os.path.expanduser("~/R/site-library"))
-
-# ------------------------------------------------------------------------
-
 from loone_data_prep.flow_data.forecast_bias_correction import get_bias_corrected_data
 from loone_data_prep.utils import get_dbkeys
 import datetime
