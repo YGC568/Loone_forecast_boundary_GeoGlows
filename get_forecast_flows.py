@@ -1,3 +1,18 @@
+# --- GitHub Actions Patch: Prevent rpy2 from overriding LD_LIBRARY_PATH ---
+import os
+os.environ["R_HOME"] = os.environ.get("R_HOME", "/usr/lib/R")
+os.environ["R_LIBS_USER"] = os.environ.get("R_LIBS_USER", os.path.expanduser("~/R/site-library"))
+os.environ["LD_LIBRARY_PATH"] = "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu"
+
+import rpy2.rinterface_lib.callbacks
+rpy2.rinterface_lib.callbacks.logger.setLevel("ERROR")
+
+# Monkey patch to disable environment override that causes GitHub error
+import rpy2.rinterface
+rpy2.rinterface.initr = lambda: None
+
+# ------------------------------------------------------------------------
+
 from loone_data_prep.flow_data.forecast_bias_correction import get_bias_corrected_data
 from loone_data_prep.utils import get_dbkeys
 import datetime
