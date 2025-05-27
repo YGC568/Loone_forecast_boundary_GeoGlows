@@ -1,20 +1,21 @@
-# --- GitHub Actions Patch for rpy2: Clean R environment init ---
+# --- GitHub Actions Patch for rpy2: Safe R Initialization ---
 import os
 
-# Set minimal environment to avoid bad overrides in GitHub runners
+# Set minimal environment manually
 os.environ["R_HOME"] = os.environ.get("R_HOME", "/usr/lib/R")
 os.environ["R_LIBS_USER"] = os.environ.get("R_LIBS_USER", os.path.expanduser("~/R/site-library"))
 os.environ["LD_LIBRARY_PATH"] = "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu"
 
-# Silence rpy2 warnings
+# Silence warnings
 import rpy2.rinterface_lib.callbacks
 rpy2.rinterface_lib.callbacks.logger.setLevel("ERROR")
 
-# Initialize R manually
+# Try initializing R manually
 import rpy2.rinterface
-if not rpy2.rinterface.initr_is_initialized:
+try:
     rpy2.rinterface.initr()
-
+except Exception as e:
+    print(f"[rpy2] R initialization failed or already initialized: {e}")
 
 # ------------------------------------------------------------------------
 
