@@ -1,15 +1,20 @@
-# --- GitHub Actions Patch: Prevent rpy2 from overriding LD_LIBRARY_PATH ---
+# --- GitHub Actions Patch for rpy2: Clean R environment init ---
 import os
+
+# Set minimal environment to avoid bad overrides in GitHub runners
 os.environ["R_HOME"] = os.environ.get("R_HOME", "/usr/lib/R")
 os.environ["R_LIBS_USER"] = os.environ.get("R_LIBS_USER", os.path.expanduser("~/R/site-library"))
 os.environ["LD_LIBRARY_PATH"] = "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu"
 
+# Silence rpy2 warnings
 import rpy2.rinterface_lib.callbacks
 rpy2.rinterface_lib.callbacks.logger.setLevel("ERROR")
 
-# Monkey patch to disable environment override that causes GitHub error
+# Initialize R manually
 import rpy2.rinterface
-rpy2.rinterface.initr = lambda: None
+if not rpy2.rinterface.initr_is_initialized:
+    rpy2.rinterface.initr()
+
 
 # ------------------------------------------------------------------------
 
