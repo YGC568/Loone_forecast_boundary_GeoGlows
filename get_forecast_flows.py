@@ -1,18 +1,8 @@
-# --- GitHub Actions rpy2 Patch: Block R from resetting LD_LIBRARY_PATH ---
 import os
 
-# Set clean environment
-os.environ["R_HOME"] = "/usr/lib/R"
-os.environ["R_LIBS_USER"] = os.path.expanduser("~/R/site-library")
-os.environ["LD_LIBRARY_PATH"] = "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu"
-
-# Silence rpy2 warnings
-import rpy2.rinterface_lib.callbacks
-rpy2.rinterface_lib.callbacks.logger.setLevel("ERROR")
-
-# Monkey patch initr to NOOP to prevent os.environ.update() error in GitHub Actions
-import rpy2.rinterface
-rpy2.rinterface.initr = lambda: None
+# Set only if not already set
+os.environ.setdefault("R_HOME", "/usr/lib/R")
+os.environ.setdefault("R_LIBS_USER", os.path.expanduser("~/R/site-library"))
 
 # ------------------------------------------------------------------------
 
@@ -20,7 +10,7 @@ from loone_data_prep.flow_data.forecast_bias_correction import get_bias_correcte
 from loone_data_prep.utils import get_dbkeys
 import datetime
 import geoglows
-import os
+#import os
 import sys
 import glob
 import pandas as pd
