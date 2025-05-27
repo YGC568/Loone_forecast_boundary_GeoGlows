@@ -65,7 +65,7 @@ jobs:
       run: |
         echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
         echo "R_LIBS_USER=~/R/site-library" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(R RHOME)/lib" >> $GITHUB_ENV
+    # echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(R RHOME)/lib" >> $GITHUB_ENV
 
     - name: Disable SSL verification for R
       run: |
