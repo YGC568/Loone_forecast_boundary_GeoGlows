@@ -1,4 +1,28 @@
+# Final Patch for rpy2 LD_LIBRARY_PATH issue on GitHub Actions
+
 import os
+
+# Manually set a clean library path
+os.environ["R_HOME"] = "/usr/lib/R"
+os.environ["R_LIBS_USER"] = os.path.expanduser("~/R/site-library")
+os.environ["LD_LIBRARY_PATH"] = "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu"
+
+# Patch must happen before any robjects import!
+import rpy2.rinterface_lib.callbacks
+rpy2.rinterface_lib.callbacks.logger.setLevel("ERROR")
+
+import rpy2.rinterface
+
+# Patch BEFORE initr is triggered by any robjects call
+def no_op_setrenvvars(*args, **kwargs):
+    print("⚠️ Skipping _setrenvvars to prevent LD_LIBRARY_PATH error.")
+    return None
+
+rpy2.rinterface._setrenvvars = no_op_setrenvvars
+rpy2.rinterface.initr()
+# ---------------------------------------------------------------------------
+
+from rpy2.robjects import r
 from loone_data_prep.flow_data.forecast_bias_correction import get_bias_corrected_data
 from loone_data_prep.utils import get_dbkeys
 import datetime
