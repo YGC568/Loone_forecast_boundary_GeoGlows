@@ -107,7 +107,7 @@ jobs:
       env:
         R_HOME: ${{ env.R_HOME }}
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
-        LD_LIBRARY_PATH: /usr/lib/R/lib:/usr/lib/x86_64-linux-gnu
+        # LD_LIBRARY_PATH: /usr/lib/R/lib:/usr/lib/x86_64-linux-gnu
       run: python get_forecast_flows.py forecasted_boundary_$(date +'%m_%Y') True forecasted_boundary_$(date +'%m_%Y')
 
       
