@@ -1,21 +1,18 @@
-# --- GitHub Actions Patch for rpy2: Safe R Initialization ---
+# --- GitHub Actions rpy2 Patch: Block R from resetting LD_LIBRARY_PATH ---
 import os
 
-# Set minimal environment manually
-os.environ["R_HOME"] = os.environ.get("R_HOME", "/usr/lib/R")
-os.environ["R_LIBS_USER"] = os.environ.get("R_LIBS_USER", os.path.expanduser("~/R/site-library"))
+# Set clean environment
+os.environ["R_HOME"] = "/usr/lib/R"
+os.environ["R_LIBS_USER"] = os.path.expanduser("~/R/site-library")
 os.environ["LD_LIBRARY_PATH"] = "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu"
 
-# Silence warnings
+# Silence rpy2 warnings
 import rpy2.rinterface_lib.callbacks
 rpy2.rinterface_lib.callbacks.logger.setLevel("ERROR")
 
-# Try initializing R manually
+# Monkey patch initr to NOOP to prevent os.environ.update() error in GitHub Actions
 import rpy2.rinterface
-try:
-    rpy2.rinterface.initr()
-except Exception as e:
-    print(f"[rpy2] R initialization failed or already initialized: {e}")
+rpy2.rinterface.initr = lambda: None
 
 # ------------------------------------------------------------------------
 
