@@ -3,7 +3,7 @@ name: Geoglows Processing_dbhybroR
 on:
   schedule:
     - cron: '0 10 * * *'  # Runs daily at 10 AM UTC (5 AM EST)
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:
 
 jobs:
   run-script:
@@ -93,11 +93,21 @@ jobs:
           python -m loone_data_prep.flow_data.S65E_total historical_data_download
         fi
 
+    - name: Debug Environment Variables
+      run: |
+        echo "R_HOME=$R_HOME"
+        echo "R_LIBS_USER=$R_LIBS_USER"
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+      env:
+        R_HOME: ${{ env.R_HOME }}
+        R_LIBS_USER: ${{ env.R_LIBS_USER }}
+        LD_LIBRARY_PATH: /usr/lib/R/lib:/usr/lib/x86_64-linux-gnu
+
     - name: Run forecast flows script
       env:
         R_HOME: ${{ env.R_HOME }}
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
-        LD_LIBRARY_PATH: /usr/lib/R/lib:/usr/lib/x86_64-linux-gnu  # Prevent rpy2 crash
+        LD_LIBRARY_PATH: /usr/lib/R/lib:/usr/lib/x86_64-linux-gnu
       run: python get_forecast_flows.py forecasted_boundary_$(date +'%m_%Y') True forecasted_boundary_$(date +'%m_%Y')
 
     - name: Configure Git
