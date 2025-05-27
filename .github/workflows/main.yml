@@ -1,14 +1,17 @@
 name: Geoglows Processing_dbhybroR
+
 on:
   schedule:
-    - cron: '0 10 * * *'  # cron expression runs the job daily at 10 AM UTC (5 AM EST)
-  workflow_dispatch:  # Allows manual trigger of the workflow
+    - cron: '0 10 * * *'  # Runs daily at 10 AM UTC (5 AM EST)
+  workflow_dispatch:  # Allows manual trigger
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout repository content
-      uses: actions/checkout@v2  # Checkout the repository content to GitHub runner
+      uses: actions/checkout@v2
 
     - name: Cache pip packages
       uses: actions/cache@v4
@@ -29,11 +32,7 @@ jobs:
     - name: Install system dependencies for R and rpy2
       run: |
         sudo apt-get update
-        sudo apt-get install -y r-base libcurl4-openssl-dev libssl-dev libxml2-dev ca-certificates
-        sudo apt-get install -y libtirpc-dev
-
-    - name: Install CA certificates
-      run: sudo apt-get install -y ca-certificates
+        sudo apt-get install -y r-base libcurl4-openssl-dev libssl-dev libxml2-dev ca-certificates libtirpc-dev
 
     - name: Create R library directory
       run: mkdir -p ~/R/site-library
@@ -44,16 +43,16 @@ jobs:
     - name: Install remotes package
       run: |
         R -e 'install.packages(c("remotes", "dplyr"), lib="~/R/site-library", repos="https://cloud.r-project.org/")'
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.10'  # Specify the Python version you need
+        python-version: '3.10'
 
     - name: Install Python dependencies
       run: |
         pip install loone-data-prep==0.1.9
-        pip install rpy2  # Install rpy2 to use R within Python
-
+        pip install rpy2
 
     - name: Install dbhydroR from GitHub
       env:
@@ -65,7 +64,6 @@ jobs:
       run: |
         echo "R_HOME=$(R RHOME)" >> $GITHUB_ENV
         echo "R_LIBS_USER=~/R/site-library" >> $GITHUB_ENV
-    # echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(R RHOME)/lib" >> $GITHUB_ENV
 
     - name: Disable SSL verification for R
       run: |
@@ -78,19 +76,16 @@ jobs:
         echo 'Sys.setlocale("LC_ALL", "en_US.UTF-8")' >> ~/.Rprofile
 
     - name: Create necessary directories
-      run: |
-        mkdir -p historical_data_download
-   
+      run: mkdir -p historical_data_download
+
     - name: Create month-year directory
-      run: |
-        mkdir -p forecasted_boundary_$(date +'%m_%Y')
+      run: mkdir -p forecasted_boundary_$(date +'%m_%Y')
 
     - name: Monthly Geoglows data preparation
       if: ${{ (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch') }}
       env:
         R_HOME: ${{ env.R_HOME }}
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
-        LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
       run: |
         if [ "$(date +'%d')" -eq "01" ]; then
           python -m loone_data_prep.flow_data.get_inflows historical_data_download && \
@@ -102,9 +97,9 @@ jobs:
       env:
         R_HOME: ${{ env.R_HOME }}
         R_LIBS_USER: ${{ env.R_LIBS_USER }}
-        LD_LIBRARY_PATH: ${{ env.LD_LIBRARY_PATH }}
+        LD_LIBRARY_PATH: /usr/lib/R/lib:/usr/lib/x86_64-linux-gnu  # Prevent rpy2 crash
       run: python get_forecast_flows.py forecasted_boundary_$(date +'%m_%Y') True forecasted_boundary_$(date +'%m_%Y')
-#here true means bias corrected
+
     - name: Configure Git
       run: |
         git config --global user.name 'YGC568'
